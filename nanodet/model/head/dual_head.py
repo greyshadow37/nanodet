@@ -73,9 +73,13 @@ class DualNanoDetPlusHead(nn.Module):
             "o2o": self.o2o_head(feats),
         }
 
-    def loss(self, preds, gt_meta, epoch=None, **kwargs):
-        o2m_loss, o2m_states = self.o2m_head.loss(preds["o2m"], gt_meta)
-        o2o_loss, o2o_states = self.o2o_head.loss(preds["o2o"], gt_meta)
+    def loss(self, preds, gt_meta, epoch=None, aux_preds=None, **kwargs):
+        o2m_loss, o2m_states = self.o2m_head.loss(
+            preds["o2m"], gt_meta, aux_preds=aux_preds
+        )
+        o2o_loss, o2o_states = self.o2o_head.loss(
+            preds["o2o"], gt_meta, aux_preds=aux_preds
+        )
         o2m_w, o2o_w = self.balancer.weights(epoch)
 
         total_loss = o2m_w * o2m_loss + o2o_w * o2o_loss

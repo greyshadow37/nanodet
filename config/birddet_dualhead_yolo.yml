@@ -1,10 +1,13 @@
 save_dir: workspace/birddet_dualhead_yolo
+# Dataset classes are referenced by tools/train.py for the head-size check.
+class_names: ['asian-green-bee-eater', 'cattle-egret', 'gray-wagtail', 'indian-pitta', 'ruddy-shelduck']
 model:
   weight_averager:
     name: ExpMovingAverager
     decay: 0.9998
   arch:
     name: DualHeadDetector
+    detach_epoch: 10
     backbone:
       name: SFuseNet
       model_size: 1.0x
@@ -24,7 +27,7 @@ model:
       simam_lambda: 0.0001
       activation: LeakyReLU
     head:
-      name: DualNanoDetPlusHead
+      name: STALDualNanoDetPlusHead
       num_classes: 5
       input_channel: 96
       feat_channels: 96
@@ -36,6 +39,11 @@ model:
       norm_cfg:
         type: BN
       inference_head: o2o
+      stal_cfg:
+        # STAL expands only the candidate-selection geometry of boxes under 8 px.
+        # Regression targets always use the original annotated box.
+        small_target_threshold: 8.0
+        reference_size: 16.0
       balancer_cfg:
         warmup_epochs: 0
         transition_epochs: 25
@@ -56,6 +64,15 @@ model:
         loss_bbox:
           name: GIoULoss
           loss_weight: 2.0
+    aux_head:
+      name: SimpleConvHead
+      num_classes: 5
+      input_channel: 192
+      feat_channels: 192
+      stacked_convs: 4
+      strides: [8, 16, 32, 64]
+      activation: LeakyReLU
+      reg_max: 7
 data:
   train:
     name: YoloDataset
@@ -99,10 +116,10 @@ schedule:
     name: linear
     steps: 200
     ratio: 0.0001
-  total_epochs: 50
+  total_epochs: 30
   lr_schedule:
     name: CosineAnnealingLR
-    T_max: 50
+    T_max: 30
     eta_min: 0.00005
   val_intervals: 5
 grad_clip: 35

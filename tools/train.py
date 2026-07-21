@@ -111,23 +111,30 @@ def main(args):
         if "resume" in cfg.schedule
         else None
     )
+    cuda_available = torch.cuda.is_available()
     if cfg.device.gpu_ids == -1:
         logger.info("Using CPU training")
         accelerator, devices, strategy, precision = (
             "cpu",
-            None,
-            None,
+            1,
+            "auto",
             cfg.device.precision,
         )
     else:
+        if not cuda_available:
+            raise RuntimeError(
+                "CUDA is not available in this environment. "
+                "Install a CUDA-enabled PyTorch build in bird_env or set "
+                "cfg.device.gpu_ids to -1 for CPU-only debugging."
+            )
         accelerator, devices, strategy, precision = (
             "gpu",
             cfg.device.gpu_ids,
-            None,
+            "auto",
             cfg.device.precision,
         )
 
-    if devices and len(devices) > 1:
+    if isinstance(devices, (list, tuple)) and len(devices) > 1:
         strategy = "ddp"
         env_utils.set_multi_processing(distributed=True)
 

@@ -39,8 +39,13 @@ def build_model(model_cfg):
     elif name == "NanoDetPlus":
         model = NanoDetPlus(**model_cfg.arch)
     elif name == "DualHeadDetector":
+        arch = model_cfg.arch
         model = DualHeadDetector(
-            model_cfg.arch.backbone, model_cfg.arch.fpn, model_cfg.arch.head
+            arch.backbone,
+            arch.fpn,
+            arch.head,
+            aux_head=getattr(arch, "aux_head", None),
+            detach_epoch=getattr(arch, "detach_epoch", 0),
         )
     else:
         raise NotImplementedError
