@@ -16,6 +16,7 @@ import copy
 
 from .fpn import FPN
 from .ghost_pan import GhostPAN
+from .ghost_simampan import GhostSimAMPAN
 from .pan import PAN
 from .tan import TAN
 
@@ -31,5 +32,7 @@ def build_fpn(cfg):
         return TAN(**fpn_cfg)
     elif name == "GhostPAN":
         return GhostPAN(**fpn_cfg)
+    elif name == "GhostSimAMPAN":
+        return GhostSimAMPAN(**fpn_cfg)
     else:
         raise NotImplementedError

@@ -17,9 +17,10 @@ import os
 import time
 from collections import defaultdict
 from typing import Optional, Sequence
+from pathlib import Path
 
+import cv2
 import numpy as np
-from imagesize import imagesize
 from pycocotools.coco import COCO
 
 from .coco import CocoDataset
@@ -72,6 +73,12 @@ class YoloDataset(CocoDataset):
         tic = time.time()
         ann_file_names = get_file_list(ann_path, type=".txt")
         logging.info("Found {} annotation files.".format(len(ann_file_names)))
+        ann_path_parts = Path(ann_path).parts
+        if "labels" in ann_path_parts:
+            labels_idx = ann_path_parts.index("labels")
+            image_dir = str(Path(*ann_path_parts[:labels_idx], "images", *ann_path_parts[labels_idx + 1 :]))
+        else:
+            image_dir = ann_path
         image_info = []
         categories = []
         annotations = []
@@ -83,7 +90,8 @@ class YoloDataset(CocoDataset):
 
         for idx, txt_name in enumerate(ann_file_names):
             ann_file = os.path.join(ann_path, txt_name)
-            image_file = self._find_image(os.path.splitext(ann_file)[0])
+            image_prefix = os.path.join(image_dir, os.path.splitext(txt_name)[0])
+            image_file = self._find_image(image_prefix)
 
             if image_file is None:
                 logging.warning(f"Could not find image for {ann_file}")
@@ -92,7 +100,11 @@ class YoloDataset(CocoDataset):
             with open(ann_file, "r") as f:
                 lines = f.readlines()
 
-            width, height = imagesize.get(image_file)
+            img = cv2.imread(image_file)
+            if img is None:
+                logging.warning(f"Could not read image size for {image_file}")
+                continue
+            height, width = img.shape[:2]
 
             file_name = os.path.basename(image_file)
             info = {

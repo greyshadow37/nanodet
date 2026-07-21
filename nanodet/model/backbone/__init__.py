@@ -20,6 +20,7 @@ from .ghostnet import GhostNet
 from .mobilenetv2 import MobileNetV2
 from .repvgg import RepVGG
 from .resnet import ResNet
+from .sfusenet import SFuseNet
 from .shufflenetv2 import ShuffleNetV2
 from .timm_wrapper import TIMMWrapper
 
@@ -31,6 +32,8 @@ def build_backbone(cfg):
         return ResNet(**backbone_cfg)
     elif name == "ShuffleNetV2":
         return ShuffleNetV2(**backbone_cfg)
+    elif name == "SFuseNet":
+        return SFuseNet(**backbone_cfg)
     elif name == "GhostNet":
         return GhostNet(**backbone_cfg)
     elif name == "MobileNetV2":

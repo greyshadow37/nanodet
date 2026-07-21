@@ -16,6 +16,7 @@ import copy
 import warnings
 
 from .nanodet_plus import NanoDetPlus
+from .dual_head_detector import DualHeadDetector
 from .one_stage_detector import OneStageDetector
 
 
@@ -37,6 +38,10 @@ def build_model(model_cfg):
         )
     elif name == "NanoDetPlus":
         model = NanoDetPlus(**model_cfg.arch)
+    elif name == "DualHeadDetector":
+        model = DualHeadDetector(
+            model_cfg.arch.backbone, model_cfg.arch.fpn, model_cfg.arch.head
+        )
     else:
         raise NotImplementedError
     return model

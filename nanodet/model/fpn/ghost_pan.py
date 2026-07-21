@@ -16,6 +16,7 @@ import torch.nn as nn
 
 from ..backbone.ghostnet import GhostBottleneck
 from ..module.conv import ConvModule, DepthwiseConvModule
+from ..module.simam import SimAM
 
 
 class GhostBlocks(nn.Module):
@@ -39,10 +40,13 @@ class GhostBlocks(nn.Module):
         kernel_size=5,
         num_blocks=1,
         use_res=False,
+        use_simam=False,
+        simam_lambda=1e-4,
         activation="LeakyReLU",
     ):
         super(GhostBlocks, self).__init__()
         self.use_res = use_res
+        self.use_simam = use_simam
         if use_res:
             self.reduce_conv = ConvModule(
                 in_channels,
@@ -64,12 +68,13 @@ class GhostBlocks(nn.Module):
                 )
             )
         self.blocks = nn.Sequential(*blocks)
+        self.attn = SimAM(simam_lambda) if use_simam else nn.Identity()
 
     def forward(self, x):
         out = self.blocks(x)
         if self.use_res:
             out = out + self.reduce_conv(x)
-        return out
+        return self.attn(out)
 
 
 class GhostPAN(nn.Module):
@@ -104,6 +109,8 @@ class GhostPAN(nn.Module):
         expand=1,
         num_blocks=1,
         use_res=False,
+        use_simam=False,
+        simam_lambda=1e-4,
         num_extra_level=0,
         upsample_cfg=dict(scale_factor=2, mode="bilinear"),
         norm_cfg=dict(type="BN"),
@@ -140,6 +147,8 @@ class GhostPAN(nn.Module):
                     kernel_size=kernel_size,
                     num_blocks=num_blocks,
                     use_res=use_res,
+                    use_simam=use_simam,
+                    simam_lambda=simam_lambda,
                     activation=activation,
                 )
             )
@@ -167,6 +176,8 @@ class GhostPAN(nn.Module):
                     kernel_size=kernel_size,
                     num_blocks=num_blocks,
                     use_res=use_res,
+                    use_simam=use_simam,
+                    simam_lambda=simam_lambda,
                     activation=activation,
                 )
             )
